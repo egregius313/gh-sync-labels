@@ -25,8 +25,20 @@ func GetRepositories(repoOrOrg string) ([]*repository.Repository, error) {
 	}
 
 	var repos []*repository.Repository
-	if err := json.Unmarshal(stdout.Bytes(), &repos); err != nil {
+
+	type RepoFullName struct {
+		FullName string `json:"full_name"`
+	}
+	var repoNames []RepoFullName
+
+	if err := json.Unmarshal(stdout.Bytes(), &repoNames); err != nil {
 		return nil, fmt.Errorf("failed to parse repositories response: %w", err)
+	}
+
+	for _, repoName := range repoNames {
+		if repo, err := repository.Parse(repoName.FullName); err == nil {
+			repos = append(repos, &repo)
+		}
 	}
 
 	return repos, nil
